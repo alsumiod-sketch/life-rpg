@@ -1,1 +1,1119 @@
-<h1>test</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life RPG</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#030712;color:#fff;font-family:'Segoe UI',system-ui,sans-serif;overflow-x:hidden}
+.fade-in{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 8px var(--glow)}50%{box-shadow:0 0 25px var(--glow)}}
+@keyframes float{0%,100%{transform:translateY(0) translateX(0);opacity:.08}50%{transform:translateY(-50px) translateX(15px);opacity:.3}}
+@keyframes levelUp{0%{transform:scale(0);opacity:0}50%{transform:scale(1.2);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes slideDown{from{transform:translateY(-30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes confetti{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(400px) rotate(720deg);opacity:0}}
+@keyframes shakeX{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes glow-pulse{0%,100%{opacity:.6}50%{opacity:1}}
+.bar-track{width:100%;height:10px;background:#1f2937;border-radius:99px;overflow:hidden;border:1px solid #374151}
+.bar-fill{height:100%;border-radius:99px;transition:width .8s ease}
+.btn{border:none;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn:hover{transform:scale(1.03)}
+.btn:active{transform:scale(.97)}
+.card{background:#111827;border:1px solid #1f2937;border-radius:16px;padding:16px;transition:all .2s}
+.card:hover{border-color:#374151}
+.tab-bar{display:flex;gap:2px;background:#111827;border-radius:12px;padding:3px;margin-bottom:16px;flex-wrap:wrap}
+.tab{flex:1;padding:7px 2px;border:none;background:none;color:#6b7280;font-size:11px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .2s;min-width:0;white-space:nowrap}
+.tab.active{background:#1f2937;color:#fff}
+.quest-btn{width:100%;display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;border:1px solid #1f2937;background:#111827;cursor:pointer;text-align:left;font-family:inherit;transition:all .2s;color:#fff}
+.quest-btn:hover:not(.done){background:#1a2332;border-color:#374151}
+.quest-btn.done{opacity:.45;cursor:default}
+.stat-card{padding:16px;border-radius:16px;border:1px solid #374151;text-align:center;transition:all .2s}
+.stat-card:hover{transform:scale(1.05)}
+.class-card{padding:20px;border-radius:16px;border:2px solid #374151;cursor:pointer;text-align:left;transition:all .25s;background:#111827}
+.class-card:hover{transform:scale(1.02)}
+.class-card.selected{transform:scale(1.05)}
+.particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;background:#eab308;animation:float var(--dur) ease-in-out var(--delay) infinite}
+.header{position:sticky;top:0;z-index:30;background:rgba(3,7,18,.92);backdrop-filter:blur(12px);border-bottom:1px solid #1f2937;padding:12px 16px}
+.reward-popup{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:40;background:#111827;border:1px solid #eab308;border-radius:12px;padding:8px 20px;display:flex;gap:16px;animation:slideDown .3s ease;box-shadow:0 0 30px #eab30833}
+.levelup-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.85)}
+.levelup-content{text-align:center;animation:levelUp .6s ease}
+.history-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#111827;border:1px solid #1f2937;margin-bottom:6px;font-size:13px}
+.streak-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700}
+input[type="text"]{background:#111827;border:2px solid #374151;color:#fff;padding:14px 20px;border-radius:12px;font-size:18px;text-align:center;width:300px;font-family:inherit;outline:none;transition:border .2s}
+input[type="text"]:focus{border-color:#eab308}
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;z-index:60;animation:confetti 2s ease forwards}
+.skill-card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:8px;transition:all .2s}
+.skill-card:hover{border-color:#374151}
+.achievement-card{background:#111827;border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:8px;transition:all .3s;position:relative;overflow:hidden}
+.achievement-card.unlocked{border-color:#eab30855}
+.achievement-card.unlocked::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#eab30808,transparent);pointer-events:none}
+.achievement-card.locked{opacity:.45}
+.toast{position:fixed;top:120px;left:50%;transform:translateX(-50%);z-index:45;background:#111827;border:1px solid #a855f7;border-radius:12px;padding:10px 24px;display:flex;gap:12px;align-items:center;animation:slideDown .4s ease;box-shadow:0 0 30px #a855f744}
+.progress-ring{display:inline-flex;align-items:center;justify-content:center;position:relative}
+.loading-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.spinner{width:40px;height:40px;border:3px solid #1f2937;border-top-color:#eab308;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect, useRef, useCallback, useMemo} = React;
+
+// ─── TELEGRAM INTEGRATION ───
+const TG = window.Telegram?.WebApp;
+const isTelegram = !!(TG && TG.initData && TG.initData.length > 0);
+if (isTelegram) {
+  TG.ready();
+  TG.expand();
+  TG.disableVerticalSwipes();
+}
+
+// Get Telegram user name
+const tgUser = TG?.initDataUnsafe?.user;
+const tgUserName = tgUser ? (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')) : null;
+
+// ─── DATABASE (Telegram CloudStorage + localStorage fallback) ───
+// CloudStorage: async, 4096 chars per value, 1024 keys max
+// localStorage: sync fallback for browser testing
+
+const DB = {
+  _cloud: isTelegram && TG.CloudStorage,
+
+  save(key, data) {
+    const val = JSON.stringify(data);
+    // Split large values into chunks of 4000 chars (safety margin)
+    if (val.length > 4000) {
+      const chunks = Math.ceil(val.length / 4000);
+      for (let i = 0; i < chunks; i++) {
+        const chunkKey = 'lifeRPG_' + key + '_chunk_' + i;
+        const chunkVal = val.slice(i * 4000, (i + 1) * 4000);
+        if (this._cloud) {
+          this._cloud.setItem(chunkKey, chunkVal, ()=>{});
+        } else {
+          try { localStorage.setItem(chunkKey, chunkVal); } catch(e) {}
+        }
+      }
+      // Save chunk count
+      const metaKey = 'lifeRPG_' + key + '_chunks';
+      const metaVal = JSON.stringify(chunks);
+      if (this._cloud) {
+        this._cloud.setItem(metaKey, metaVal, ()=>{});
+      } else {
+        try { localStorage.setItem(metaKey, metaVal); } catch(e) {}
+      }
+    } else {
+      if (this._cloud) {
+        this._cloud.setItem('lifeRPG_' + key, val, ()=>{});
+      } else {
+        try { localStorage.setItem('lifeRPG_' + key, val); } catch(e) {}
+      }
+    }
+  },
+
+  // Async load — returns Promise
+  loadAsync(key) {
+    return new Promise((resolve) => {
+      if (this._cloud) {
+        // First check if chunked
+        const metaKey = 'lifeRPG_' + key + '_chunks';
+        this._cloud.getItem(metaKey, (err, metaVal) => {
+          if (!err && metaVal) {
+            const chunks = JSON.parse(metaVal);
+            const chunkKeys = [];
+            for (let i = 0; i < chunks; i++) chunkKeys.push('lifeRPG_' + key + '_chunk_' + i);
+            this._cloud.getItems(chunkKeys, (err2, results) => {
+              if (err2) { resolve(null); return; }
+              let full = '';
+              for (let i = 0; i < chunks; i++) full += (results[chunkKeys[i]] || '');
+              try { resolve(JSON.parse(full)); } catch(e) { resolve(null); }
+            });
+          } else {
+            // Not chunked, load directly
+            this._cloud.getItem('lifeRPG_' + key, (err2, val) => {
+              if (err2 || !val) { resolve(null); return; }
+              try { resolve(JSON.parse(val)); } catch(e) { resolve(null); }
+            });
+          }
+        });
+      } else {
+        // localStorage fallback (sync but wrapped in promise)
+        try {
+          // Check chunks first
+          const metaVal = localStorage.getItem('lifeRPG_' + key + '_chunks');
+          if (metaVal) {
+            const chunks = JSON.parse(metaVal);
+            let full = '';
+            for (let i = 0; i < chunks; i++) full += (localStorage.getItem('lifeRPG_' + key + '_chunk_' + i) || '');
+            resolve(JSON.parse(full));
+          } else {
+            const d = localStorage.getItem('lifeRPG_' + key);
+            resolve(d ? JSON.parse(d) : null);
+          }
+        } catch(e) { resolve(null); }
+      }
+    });
+  },
+
+  clear() {
+    if (this._cloud) {
+      this._cloud.getKeys((err, keys) => {
+        if (!err && keys && keys.length) {
+          const toRemove = keys.filter(k => k.startsWith('lifeRPG_'));
+          if (toRemove.length) this._cloud.removeItems(toRemove, ()=>{});
+        }
+      });
+    }
+    try {
+      Object.keys(localStorage).filter(k => k.startsWith('lifeRPG_')).forEach(k => localStorage.removeItem(k));
+    } catch(e) {}
+  }
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+const daysBetween = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
+
+// ─── GAME DATA ───
+const CLASSES = [
+  {id:"warrior",name:"Воин",icon:"⚔️",color:"#ef4444",stat:"STR",desc:"Дисциплина и физическая мощь.",bonus:"×1.5 XP за STR-квесты"},
+  {id:"mage",name:"Маг",icon:"🧙",color:"#3b82f6",stat:"INT",desc:"Знания — твоё оружие.",bonus:"×1.5 XP за INT-квесты"},
+  {id:"ranger",name:"Рейнджер",icon:"🏹",color:"#22c55e",stat:"DEX",desc:"Скорость и точность.",bonus:"×1.5 XP за DEX-квесты"},
+  {id:"bard",name:"Бард",icon:"🎶",color:"#eab308",stat:"CHA",desc:"Слова и связи — суперсила.",bonus:"×1.5 XP за CHA-квесты"},
+  {id:"druid",name:"Друид",icon:"🌿",color:"#a855f7",stat:"WIS",desc:"Баланс и гармония.",bonus:"×1.5 XP за WIS-квесты"},
+  {id:"paladin",name:"Паладин",icon:"🛡️",color:"#78716c",stat:"CON",desc:"Несокрушимая стабильность.",bonus:"×1.5 XP за CON-квесты"},
+];
+
+const QUESTS = {
+  STR:[
+    {name:"Тренировка (30+ мин)",xp:15,gold:10,icon:"🏋️",sp:10},
+    {name:"10 000 шагов",xp:10,gold:5,icon:"🚶",sp:5},
+    {name:"Зарядка утром",xp:5,gold:3,icon:"🌅",sp:3},
+  ],
+  INT:[
+    {name:"Чтение (30+ мин)",xp:10,gold:5,icon:"📚",sp:8},
+    {name:"Онлайн-курс (1 урок)",xp:15,gold:10,icon:"🎓",sp:10},
+    {name:"Изучение языка (15 мин)",xp:10,gold:5,icon:"🌐",sp:5},
+  ],
+  DEX:[
+    {name:"Глубокая работа (2+ часа)",xp:20,gold:15,icon:"🎯",sp:12},
+    {name:"Завершить 3 задачи",xp:15,gold:10,icon:"✅",sp:8},
+    {name:"Планирование дня",xp:5,gold:3,icon:"📝",sp:3},
+  ],
+  CHA:[
+    {name:"Написать/позвонить близкому",xp:10,gold:5,icon:"📱",sp:5},
+    {name:"Встретиться с другом",xp:15,gold:10,icon:"🤝",sp:10},
+    {name:"Помочь кому-то",xp:10,gold:5,icon:"💛",sp:5},
+  ],
+  WIS:[
+    {name:"Медитация (10+ мин)",xp:10,gold:5,icon:"🧘",sp:8},
+    {name:"Дневник / рефлексия",xp:10,gold:5,icon:"📓",sp:5},
+    {name:"Без соцсетей 3+ часа",xp:10,gold:5,icon:"🔇",sp:5},
+  ],
+  CON:[
+    {name:"Пить 2+ литра воды",xp:5,gold:3,icon:"💧",sp:3},
+    {name:"Лечь спать до полуночи",xp:10,gold:5,icon:"🌙",sp:5},
+    {name:"Без сахара / фастфуда",xp:10,gold:5,icon:"🥗",sp:8},
+  ],
+};
+
+const BOSSES = [
+  {name:"Утренний Демон",icon:"👿",condition:"Встань до 7:00 — 7 дней подряд",total:7,xp:50,gold:30,tier:"mini"},
+  {name:"Прокрастинация",icon:"🧟",condition:"Закончи откладываемое дело — 5 раз",total:5,xp:60,gold:40,tier:"mini"},
+  {name:"Сахарный Голем",icon:"🧁",condition:"14 дней без сахара/фастфуда",total:14,xp:80,gold:50,tier:"mini"},
+  {name:"Диванный Дракон",icon:"📺",condition:"Тренировка каждый день — 7 дней",total:7,xp:120,gold:80,tier:"weekly"},
+  {name:"Хаос-Демон",icon:"🌀",condition:"Планируй утро + итоги вечером — 7 дней",total:7,xp:100,gold:75,tier:"weekly"},
+  {name:"Дракон Нестабильности",icon:"🐉",condition:"60-дневный стрик (≥3 квеста/день)",total:60,xp:500,gold:500,tier:"raid"},
+];
+
+// ─── LEVELS (1-20) with progressive XP curve ───
+const LEVELS = [
+  {level:1,xp:0,rank:"Новичок",title:null},
+  {level:2,xp:100,rank:"Ученик",title:null},
+  {level:3,xp:250,rank:"Странник",title:null},
+  {level:4,xp:500,rank:"Воин",title:null},
+  {level:5,xp:800,rank:"Рыцарь",title:null},
+  {level:6,xp:1200,rank:"Боец",title:null},
+  {level:7,xp:1700,rank:"Мастер",title:null},
+  {level:8,xp:2400,rank:"Чемпион",title:null},
+  {level:9,xp:3200,rank:"Герой",title:null},
+  {level:10,xp:4200,rank:"Мифический",title:"Мифический"},
+  {level:11,xp:5400,rank:"Легенда",title:null},
+  {level:12,xp:6800,rank:"Полубог",title:null},
+  {level:13,xp:8500,rank:"Титан",title:null},
+  {level:14,xp:10500,rank:"Архонт",title:null},
+  {level:15,xp:13000,rank:"Бессмертный",title:null},
+  {level:16,xp:16000,rank:"Трансцендент",title:null},
+  {level:17,xp:19500,rank:"Аватар",title:null},
+  {level:18,xp:24000,rank:"Демиург",title:null},
+  {level:19,xp:30000,rank:"Создатель",title:null},
+  {level:20,xp:40000,rank:"Бог",title:"Бог"},
+];
+
+// ─── SKILL TREES ───
+const SKILL_TREES = {
+  STR: {
+    name:"Тело", icon:"💪", color:"#ef4444",
+    skills: [
+      {id:"str_train",name:"Силовые тренировки",passiveLv3:"+5 макс HP",passiveLv5:"×1.5 XP за STR"},
+      {id:"str_cardio",name:"Кардио",passiveLv3:"+10 HP/день восст.",passiveLv5:"Пропуск 1 дня без штрафа"},
+      {id:"str_food",name:"Питание",passiveLv3:"+5 HP за ЗОЖ-еду",passiveLv5:"×2 HP восстановление"},
+    ],
+  },
+  INT: {
+    name:"Разум", icon:"🧠", color:"#3b82f6",
+    skills: [
+      {id:"int_read",name:"Чтение",passiveLv3:"+3 XP ко всем квестам",passiveLv5:"INT бонус на все квесты"},
+      {id:"int_code",name:"Программирование",passiveLv3:"+10 G за DEX-квесты",passiveLv5:"1 авто-квест/день"},
+      {id:"int_lang",name:"Иностранный язык",passiveLv3:"+5 G за CHA-квесты",passiveLv5:"×2 XP за коммуникацию"},
+    ],
+  },
+  DEX: {
+    name:"Продуктивность", icon:"⚡", color:"#22c55e",
+    skills: [
+      {id:"dex_deep",name:"Глубокая работа",passiveLv3:"Режим Потока ×2.5 XP",passiveLv5:"Доп. квест-слот"},
+      {id:"dex_plan",name:"Планирование",passiveLv3:"+5 XP при плане дня",passiveLv5:"Видишь бонус-квесты"},
+      {id:"dex_habit",name:"Привычки",passiveLv3:"Стрик-бонус с 2 дня",passiveLv5:"Авто-стрик на выходных"},
+    ],
+  },
+  CHA: {
+    name:"Социальное", icon:"🗣️", color:"#f59e0b",
+    skills: [
+      {id:"cha_comm",name:"Коммуникация",passiveLv3:"+5 XP за соц. квесты",passiveLv5:"Бонус G за CHA"},
+      {id:"cha_net",name:"Нетворкинг",passiveLv3:"+10 G за знакомства",passiveLv5:"Пассивный доход 5 G/день"},
+      {id:"cha_lead",name:"Лидерство",passiveLv3:"Квесты для группы",passiveLv5:"Групповые бонусы"},
+    ],
+  },
+  WIS: {
+    name:"Дух", icon:"🌿", color:"#a855f7",
+    skills: [
+      {id:"wis_med",name:"Медитация",passiveLv3:"+10 HP восст./день",passiveLv5:"Иммунитет -HP 1 раз/нед"},
+      {id:"wis_mind",name:"Осознанность",passiveLv3:"Рефлексия +5 XP",passiveLv5:"Скрытые квесты"},
+      {id:"wis_nature",name:"Природа",passiveLv3:"Прогулка = +5 HP",passiveLv5:"×2 HP на природе"},
+    ],
+  },
+  CON: {
+    name:"Стойкость", icon:"🛡️", color:"#78716c",
+    skills: [
+      {id:"con_sleep",name:"Сон",passiveLv3:"+5 HP за 8ч сна",passiveLv5:"+20% XP после сна"},
+      {id:"con_water",name:"Гидратация",passiveLv3:"-2 HP штрафы",passiveLv5:"Авто-heal 5 HP/день"},
+      {id:"con_stress",name:"Стрессоустойчивость",passiveLv3:"-5 штрафы за провалы",passiveLv5:"Нет штрафа 1 раз/день"},
+    ],
+  },
+};
+
+const SKILL_LEVELS = [
+  {level:1, spRequired:0, rank:"Новичок"},
+  {level:2, spRequired:50, rank:"Подмастерье"},
+  {level:3, spRequired:150, rank:"Умелец"},
+  {level:4, spRequired:300, rank:"Эксперт"},
+  {level:5, spRequired:500, rank:"Мастер"},
+];
+
+function getSkillLevel(sp) {
+  let cur = SKILL_LEVELS[0];
+  for (const l of SKILL_LEVELS) { if (sp >= l.spRequired) cur = l; else break; }
+  const ni = SKILL_LEVELS.findIndex(l => l.level === cur.level) + 1;
+  const next = ni < SKILL_LEVELS.length ? SKILL_LEVELS[ni] : null;
+  return { ...cur, nextSp: next ? next.spRequired : null };
+}
+
+// ─── ACHIEVEMENTS ───
+const ACHIEVEMENTS = [
+  // Bronze
+  {id:"first_step",name:"Первый Шаг",desc:"Выполни первый квест",icon:"🥉",tier:"bronze",xp:10,gold:10,check:c=>c.questsDone>=1},
+  {id:"explorer",name:"Исследователь",desc:"Квест в каждой из 6 категорий",icon:"🥉",tier:"bronze",xp:30,gold:20,check:c=>{
+    const cats=new Set();Object.values(c.history||{}).flat().forEach(q=>cats.add(q.stat));return cats.size>=6;
+  }},
+  {id:"three_days",name:"Трёхдневка",desc:"3-дневный стрик",icon:"🥉",tier:"bronze",xp:0,gold:15,check:(c,streak)=>streak>=3},
+  // Silver
+  {id:"weekly_warrior",name:"Недельный Воин",desc:"7-дневный стрик",icon:"🥈",tier:"silver",xp:0,gold:50,check:(c,streak)=>streak>=7},
+  {id:"bookworm",name:"Книжный Червь",desc:"30 INT-квестов",icon:"🥈",tier:"silver",xp:40,gold:40,check:c=>{
+    const cnt=Object.values(c.history||{}).flat().filter(q=>q.stat==='INT').length;return cnt>=30;
+  }},
+  {id:"iron_man",name:"Железный Человек",desc:"50 STR-квестов",icon:"🥈",tier:"silver",xp:60,gold:50,check:c=>{
+    const cnt=Object.values(c.history||{}).flat().filter(q=>q.stat==='STR').length;return cnt>=50;
+  }},
+  {id:"zen_master",name:"Дзен",desc:"30 WIS-квестов",icon:"🥈",tier:"silver",xp:50,gold:40,check:c=>{
+    const cnt=Object.values(c.history||{}).flat().filter(q=>q.stat==='WIS').length;return cnt>=30;
+  }},
+  {id:"social_butterfly",name:"Социальная Бабочка",desc:"30 CHA-квестов",icon:"🥈",tier:"silver",xp:40,gold:40,check:c=>{
+    const cnt=Object.values(c.history||{}).flat().filter(q=>q.stat==='CHA').length;return cnt>=30;
+  }},
+  // Gold
+  {id:"month_fire",name:"Месяц Огня",desc:"30-дневный стрик",icon:"🥇",tier:"gold",xp:0,gold:300,check:(c,streak)=>streak>=30},
+  {id:"boss_slayer",name:"Босс-Слэер",desc:"Победи 3 боссов",icon:"🥇",tier:"gold",xp:150,gold:100,check:c=>{
+    const bp=c.bossProgress||{};let cnt=0;BOSSES.forEach(b=>{if((bp[b.name]||0)>=b.total)cnt++;});return cnt>=3;
+  }},
+  {id:"level_10",name:"Уровень 10",desc:"Достичь 10 уровня",icon:"🥇",tier:"gold",xp:0,gold:200,check:c=>c.level>=10},
+  {id:"quest_100",name:"Сотня Квестов",desc:"Выполни 100 квестов",icon:"🥇",tier:"gold",xp:100,gold:100,check:c=>c.questsDone>=100},
+  {id:"renaissance",name:"Ренессанс",desc:"Все статы ≥ 10",icon:"🥇",tier:"gold",xp:300,gold:200,check:c=>Object.values(c.stats).every(v=>v>=10)},
+  // Legendary
+  {id:"hundred_days",name:"100 Дней Силы",desc:"100-дневный стрик",icon:"🏆",tier:"legendary",xp:0,gold:1000,check:(c,streak)=>streak>=100},
+  {id:"level_20",name:"Бог",desc:"Достичь 20 уровня",icon:"🏆",tier:"legendary",xp:0,gold:5000,check:c=>c.level>=20},
+  {id:"quest_500",name:"Легенда Квестов",desc:"500 квестов",icon:"🏆",tier:"legendary",xp:500,gold:500,check:c=>c.questsDone>=500},
+];
+
+const SHOP = [
+  {name:"Кофейня",price:30,icon:"☕"},
+  {name:"Кино / Сериал",price:50,icon:"🎬"},
+  {name:"Игровой вечер",price:75,icon:"🎮"},
+  {name:"Вкусный ужин",price:100,icon:"🍽️"},
+  {name:"Новая вещь",price:200,icon:"🎁"},
+  {name:"Приключение",price:300,icon:"🏕️"},
+  {name:"Крупная покупка",price:500,icon:"🚀"},
+  {name:"МЕГА-НАГРАДА",price:1000,icon:"✨"},
+];
+
+function getLevel(xp) {
+  let cur = LEVELS[0];
+  for (const l of LEVELS) { if (xp >= l.xp) cur = l; else break; }
+  const ni = LEVELS.findIndex(l => l.level === cur.level) + 1;
+  const next = ni < LEVELS.length ? LEVELS[ni] : {xp: cur.xp + 15000};
+  return {...cur, nextXp: next.xp};
+}
+
+function calcStreak(history) {
+  if (!history) return 0;
+  const dates = Object.keys(history).sort().reverse();
+  if (!dates.length) return 0;
+  let streak = 0;
+  let checkDate = today();
+  if (!history[checkDate] || history[checkDate].length === 0) {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    checkDate = d.toISOString().slice(0,10);
+  }
+  for (let i = 0; i < 500; i++) {
+    if (history[checkDate] && history[checkDate].length > 0) {
+      streak++;
+      const d = new Date(checkDate); d.setDate(d.getDate() - 1);
+      checkDate = d.toISOString().slice(0,10);
+    } else break;
+  }
+  return streak;
+}
+
+function streakMultiplier(s) {
+  if (s >= 100) return 4;
+  if (s >= 60) return 3;
+  if (s >= 30) return 2.5;
+  if (s >= 21) return 2;
+  if (s >= 14) return 1.8;
+  if (s >= 7) return 1.5;
+  if (s >= 3) return 1.2;
+  return 1;
+}
+
+// ─── COMPONENTS ───
+
+const Particles = () => {
+  const ps = Array.from({length:12},(_,i) => ({
+    id:i, x:Math.random()*100, y:Math.random()*100,
+    size:Math.random()*3+1, dur:Math.random()*20+12, delay:Math.random()*8
+  }));
+  return <div className="particles">{ps.map(p =>
+    <div key={p.id} className="particle" style={{left:p.x+'%',top:p.y+'%',width:p.size,height:p.size,'--dur':p.dur+'s','--delay':p.delay+'s'}}/>
+  )}</div>;
+};
+
+const Bar = ({value, max, color='#eab308', height=10, showText=false}) => {
+  const pct = Math.min(value/max*100,100);
+  return <div style={{position:'relative'}}>
+    <div className="bar-track" style={{height}}>
+      <div className="bar-fill" style={{width:pct+'%',background:`linear-gradient(90deg,${color},${color}cc)`,boxShadow:`0 0 8px ${color}55`}}/>
+    </div>
+    {showText && <div style={{position:'absolute',right:0,top:-16,fontSize:10,color:'#6b7280'}}>{Math.round(pct)}%</div>}
+  </div>;
+};
+
+const Confetti = () => {
+  const colors = ['#ef4444','#eab308','#22c55e','#3b82f6','#a855f7','#f97316'];
+  return <>{Array.from({length:30},(_,i) =>
+    <div key={i} className="confetti-piece" style={{
+      left: Math.random()*100+'%', top: -10,
+      background: colors[i%colors.length],
+      animationDelay: Math.random()*0.5+'s',
+      transform: `rotate(${Math.random()*360}deg)`,
+    }}/>
+  )}</>;
+};
+
+// ─── ONBOARDING SCREENS ───
+
+const WelcomeScreen = ({onNext, hasSave}) => {
+  const [show,setShow] = useState(false);
+  useEffect(()=>{setTimeout(()=>setShow(true),100)},[]);
+  return <div className="fade-in" style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32,opacity:show?1:0,transition:'opacity .8s'}}>
+    <div style={{fontSize:80,marginBottom:16}}>⚔️</div>
+    <h1 style={{fontSize:44,fontWeight:900,background:'linear-gradient(135deg,#eab308,#f97316,#ef4444)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent',marginBottom:8}}>LIFE RPG</h1>
+    <p style={{fontSize:18,color:'#9ca3af',marginBottom:4}}>Превратим твою жизнь в эпичное приключение</p>
+    <p style={{color:'#4b5563',marginBottom:40}}>Квесты • Навыки • Боссы • Достижения • Прогресс</p>
+    <button className="btn" onClick={onNext} style={{padding:'14px 40px',borderRadius:16,fontSize:17,fontWeight:700,color:'#000',background:'linear-gradient(135deg,#eab308,#fbbf24)',boxShadow:'0 0 30px #eab30844'}}>
+      {hasSave ? '🎮 Продолжить Игру' : '⚔️ Начать Приключение'}
+    </button>
+    {hasSave && <button className="btn" onClick={()=>{DB.clear();setTimeout(()=>location.reload(),500);}} style={{marginTop:12,padding:'8px 20px',borderRadius:8,fontSize:13,color:'#6b7280',background:'transparent',border:'1px solid #374151'}}>
+      Начать заново
+    </button>}
+  </div>;
+};
+
+const NameScreen = ({name,setName,onNext}) => <div className="fade-in" style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32}}>
+  <div style={{fontSize:60,marginBottom:16}}>🧙</div>
+  <h2 style={{fontSize:28,fontWeight:700,marginBottom:8}}>Как зовут твоего героя?</h2>
+  <p style={{color:'#6b7280',marginBottom:32}}>Имя будет высечено в истории</p>
+  <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="Введи имя..." autoFocus onKeyDown={e=>e.key==='Enter'&&name.trim()&&onNext()}/>
+  {name.trim() && <button className="btn" onClick={onNext} style={{marginTop:20,padding:'12px 32px',borderRadius:12,fontWeight:700,color:'#000',background:'linear-gradient(135deg,#eab308,#fbbf24)'}}>Продолжить →</button>}
+</div>;
+
+const ClassScreen = ({sel,setSel,onNext,onBack}) => {
+  const [hov,setHov] = useState(null);
+  return <div className="fade-in" style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',padding:24}}>
+    <button className="btn" onClick={onBack} style={{alignSelf:'flex-start',color:'#6b7280',background:'none',marginBottom:16,fontSize:14}}>← Назад</button>
+    <h2 style={{fontSize:28,fontWeight:700,marginBottom:8}}>Выбери свой Класс</h2>
+    <p style={{color:'#6b7280',marginBottom:28}}>Даёт +3 к стату и постоянный бонус</p>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:12,maxWidth:520,width:'100%',marginBottom:24}}>
+      {CLASSES.map(cls => {
+        const active = sel?.id===cls.id;
+        return <div key={cls.id} className={`class-card ${active?'selected':''}`}
+          onClick={()=>setSel(cls)}
+          onMouseEnter={()=>setHov(cls.id)} onMouseLeave={()=>setHov(null)}
+          style={{
+            borderColor:active?cls.color:hov===cls.id?cls.color+'88':'#374151',
+            background:active?cls.color+'20':hov===cls.id?cls.color+'08':'#111827',
+            boxShadow:active?`0 0 25px ${cls.color}33`:'none',position:'relative',
+          }}>
+          {active && <div style={{position:'absolute',top:-8,right:-8,width:24,height:24,borderRadius:99,background:'#eab308',display:'flex',alignItems:'center',justifyContent:'center',color:'#000',fontSize:12,fontWeight:700}}>✓</div>}
+          <div style={{fontSize:36,marginBottom:8}}>{cls.icon}</div>
+          <div style={{fontWeight:700,fontSize:17}}>{cls.name}</div>
+          <div style={{fontSize:12,fontFamily:'monospace',color:cls.color,marginTop:4}}>+3 {cls.stat}</div>
+          <div style={{fontSize:11,color:'#6b7280',marginTop:6,lineHeight:1.4}}>{cls.desc}</div>
+          <div style={{fontSize:11,color:cls.color,marginTop:4,opacity:.8}}>{cls.bonus}</div>
+        </div>;
+      })}
+    </div>
+    {sel && <button className="btn" onClick={onNext} style={{padding:'12px 32px',borderRadius:14,fontWeight:700,color:'#000',background:`linear-gradient(135deg,${sel.color},${sel.color}cc)`,boxShadow:`0 0 25px ${sel.color}44`}}>
+      {sel.icon} Выбрать {sel.name} →
+    </button>}
+  </div>;
+};
+
+const ReadyScreen = ({name,cls,onStart}) => {
+  const [step,setStep] = useState(0);
+  useEffect(()=>{
+    setTimeout(()=>setStep(1),400);
+    setTimeout(()=>setStep(2),900);
+    setTimeout(()=>setStep(3),1400);
+  },[]);
+  const stats = {STR:5,INT:5,DEX:5,CHA:5,WIS:5,CON:5}; stats[cls.stat]+=3;
+  return <div className="fade-in" style={{minHeight:'100vh',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32}}>
+    <div style={{fontSize:72,marginBottom:12,transition:'all .5s',transform:step>=0?'scale(1)':'scale(0)'}}>{cls.icon}</div>
+    <h2 style={{fontSize:30,fontWeight:700,marginBottom:4,opacity:step>=1?1:0,transition:'all .5s'}}>{name}</h2>
+    <div style={{fontSize:17,fontWeight:500,color:cls.color,marginBottom:24,opacity:step>=1?1:0,transition:'all .5s'}}>
+      {cls.icon} {cls.name} • Уровень 1 • Новичок
+    </div>
+    <div style={{display:'flex',gap:14,marginBottom:24,opacity:step>=2?1:0,transition:'all .5s'}}>
+      {Object.entries(stats).map(([k,v]) =>
+        <div key={k} style={{textAlign:'center'}}>
+          <div style={{width:52,height:52,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:700,border:`2px solid ${v>5?cls.color:'#374151'}`,color:v>5?cls.color:'#e5e7eb',background:v>5?cls.color+'15':'transparent'}}>{v}</div>
+          <div style={{fontSize:11,color:'#6b7280',marginTop:4}}>{k}</div>
+        </div>
+      )}
+    </div>
+    <div style={{display:'flex',gap:20,fontSize:14,color:'#6b7280',marginBottom:32,opacity:step>=2?1:0,transition:'all .5s'}}>
+      <span>❤️ 100</span><span>⭐ 0 XP</span><span>🪙 0</span><span>🔥 0</span>
+    </div>
+    <div style={{opacity:step>=3?1:0,transition:'all .5s',textAlign:'center'}}>
+      <button className="btn" onClick={onStart} style={{padding:'14px 40px',borderRadius:16,fontSize:17,fontWeight:700,color:'#000',background:`linear-gradient(135deg,${cls.color},${cls.color}cc)`,boxShadow:`0 0 30px ${cls.color}44`}}>
+        Начать Игру! 🎮
+      </button>
+      <p style={{fontSize:12,color:'#4b5563',marginTop:12}}>Прогресс автоматически сохраняется</p>
+    </div>
+  </div>;
+};
+
+// ─── DASHBOARD ───
+
+const Dashboard = ({char, setChar}) => {
+  const [tab, setTab] = useState('quests');
+  const [todayDone, setTodayDone] = useState(() => DB.load('today_'+today(), {}));
+  const [reward, setReward] = useState(null);
+  const [lvlUp, setLvlUp] = useState(false);
+  const [toast, setToast] = useState(null);
+  const prevLvl = useRef(char.level);
+  const prevAchievements = useRef(char.achievements || []);
+
+  useEffect(()=>{ DB.save('character', char); },[char]);
+  useEffect(()=>{ DB.save('today_'+today(), todayDone); },[todayDone]);
+
+  const lvl = getLevel(char.xp);
+  const streak = calcStreak(char.history||{});
+  const mult = streakMultiplier(streak);
+
+  // Level up detection
+  useEffect(()=>{
+    if(lvl.level > prevLvl.current){
+      setLvlUp(true);
+      setTimeout(()=>setLvlUp(false),3000);
+      prevLvl.current = lvl.level;
+      setChar(c=>({...c,level:lvl.level,rank:lvl.rank,maxHp:100+lvl.level*5}));
+    }
+  },[lvl.level]);
+
+  // Achievement checking
+  useEffect(()=>{
+    const unlocked = char.achievements || [];
+    ACHIEVEMENTS.forEach(ach => {
+      if (!unlocked.includes(ach.id) && ach.check(char, streak)) {
+        // Unlock!
+        const newUnlocked = [...unlocked, ach.id];
+        setChar(c => ({
+          ...c,
+          achievements: newUnlocked,
+          xp: c.xp + ach.xp,
+          gold: c.gold + ach.gold,
+        }));
+        setToast({name: ach.name, icon: ach.icon, desc: ach.desc});
+        setTimeout(()=>setToast(null), 3000);
+      }
+    });
+  },[char.questsDone, streak, char.level]);
+
+  // Class bonus: 1.5x XP for class-stat quests
+  const classBonus = char.cls?.stat;
+
+  const completeQuest = (quest, stat) => {
+    const key = stat+':'+quest.name;
+    if(todayDone[key]) return;
+
+    let xpGain = Math.round(quest.xp * mult);
+    // Class bonus
+    if(stat === classBonus) xpGain = Math.round(xpGain * 1.5);
+    const goldGain = quest.gold;
+    const spGain = quest.sp || 5;
+
+    setTodayDone(prev => ({...prev, [key]: {xp:xpGain, gold:goldGain, sp:spGain}}));
+    setReward({xp:xpGain, gold:goldGain, isClass: stat===classBonus});
+    setTimeout(()=>setReward(null),1800);
+
+    setChar(c => {
+      const d = today();
+      const hist = {...(c.history||{})};
+      if(!hist[d]) hist[d] = [];
+      hist[d].push({quest:quest.name, stat, xp:xpGain, gold:goldGain, sp:spGain, time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})});
+
+      // Stat growth: +0.1 per quest, +1 bonus per 10 quests in category
+      const newStats = {...c.stats};
+      newStats[stat] = Math.round((newStats[stat] + 0.1)*100)/100;
+      const totalInCat = Object.values(hist).flat().filter(q=>q.stat===stat).length;
+      if(totalInCat > 0 && totalInCat % 10 === 0) {
+        newStats[stat] = Math.floor(newStats[stat]) + 1;
+      }
+
+      // Skill Points progression
+      const skillPoints = {...(c.skillPoints||{})};
+      skillPoints[stat] = (skillPoints[stat]||0) + spGain;
+
+      return {
+        ...c,
+        xp: c.xp + xpGain,
+        gold: c.gold + goldGain,
+        hp: Math.min(c.hp + 2, c.maxHp),
+        stats: newStats,
+        questsDone: (c.questsDone||0) + 1,
+        history: hist,
+        lastActive: d,
+        skillPoints,
+      };
+    });
+  };
+
+  const undoQuest = (quest, stat) => {
+    const key = stat+':'+quest.name;
+    const saved = todayDone[key];
+    if(!saved) return;
+
+    const xpLost = saved.xp || 0;
+    const goldLost = saved.gold || 0;
+    const spLost = saved.sp || 0;
+
+    setTodayDone(prev => {
+      const copy = {...prev};
+      delete copy[key];
+      return copy;
+    });
+
+    setChar(c => {
+      const d = today();
+      const hist = {...(c.history||{})};
+      // Remove last matching entry from today's history
+      if(hist[d]) {
+        const idx = [...hist[d]].reverse().findIndex(e => e.quest === quest.name && e.stat === stat);
+        if(idx >= 0) {
+          const realIdx = hist[d].length - 1 - idx;
+          hist[d] = [...hist[d].slice(0, realIdx), ...hist[d].slice(realIdx + 1)];
+          if(hist[d].length === 0) delete hist[d];
+        }
+      }
+
+      // Reverse stat growth
+      const newStats = {...c.stats};
+      newStats[stat] = Math.round((newStats[stat] - 0.1)*100)/100;
+
+      // Reverse SP
+      const skillPoints = {...(c.skillPoints||{})};
+      skillPoints[stat] = Math.max(0, (skillPoints[stat]||0) - spLost);
+
+      return {
+        ...c,
+        xp: Math.max(0, c.xp - xpLost),
+        gold: Math.max(0, c.gold - goldLost),
+        hp: Math.max(1, c.hp - 2),
+        stats: newStats,
+        questsDone: Math.max(0, (c.questsDone||1) - 1),
+        history: hist,
+        skillPoints,
+      };
+    });
+  };
+
+  const todayCount = Object.keys(todayDone).length;
+  const totalQuests = Object.values(QUESTS).flat().length;
+  const xpInLevel = char.xp - lvl.xp;
+  const xpNeeded = lvl.nextXp - lvl.xp;
+  const daysPlayed = char.history ? Object.keys(char.history).length : 0;
+  const unlockedAch = char.achievements || [];
+
+  const tabs = [
+    {id:'quests',label:'⚔️ Квесты'},
+    {id:'skills',label:'🌳 Навыки'},
+    {id:'stats',label:'📊 Статы'},
+    {id:'bosses',label:'🐲 Боссы'},
+    {id:'achieve',label:'🏆 Ачивки'},
+    {id:'history',label:'📅'},
+    {id:'shop',label:'🛒'},
+  ];
+
+  return <div style={{minHeight:'100vh',paddingBottom:80}}>
+    {lvlUp && <><div className="levelup-overlay"><div className="levelup-content">
+      <div style={{fontSize:80,marginBottom:12}}>🎉</div>
+      <div style={{fontSize:40,fontWeight:900,color:'#eab308',marginBottom:8}}>LEVEL UP!</div>
+      <div style={{fontSize:24}}>Уровень {lvl.level}</div>
+      <div style={{fontSize:18,color:'#9ca3af',marginTop:4}}>{lvl.rank}</div>
+      <div style={{fontSize:14,color:'#4b5563',marginTop:8}}>+5 макс HP</div>
+    </div></div><Confetti/></>}
+
+    {reward && <div className="reward-popup">
+      <span style={{color:'#eab308',fontWeight:700}}>+{reward.xp} XP</span>
+      {mult > 1 && <span style={{color:'#f97316',fontSize:12}}>🔥×{mult}</span>}
+      {reward.isClass && <span style={{color:'#a855f7',fontSize:12}}>⚡класс</span>}
+      <span style={{color:'#a16207',fontWeight:700}}>+{reward.gold} 🪙</span>
+    </div>}
+
+    {toast && <div className="toast">
+      <span style={{fontSize:24}}>{toast.icon}</span>
+      <div>
+        <div style={{fontWeight:700,color:'#a855f7',fontSize:14}}>🏆 Достижение!</div>
+        <div style={{fontSize:13,color:'#d1d5db'}}>{toast.name}</div>
+      </div>
+    </div>}
+
+    {/* Header */}
+    <div className="header">
+      <div style={{maxWidth:520,margin:'0 auto'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
+            <span style={{fontSize:24}}>{char.cls.icon}</span>
+            <div>
+              <span style={{fontWeight:700}}>{char.name}</span>
+              <span style={{fontSize:12,color:'#6b7280',marginLeft:8}}>Lv.{lvl.level} {lvl.rank}</span>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:10,fontSize:13,alignItems:'center'}}>
+            <span style={{color:'#eab308',fontFamily:'monospace'}}>🪙{char.gold}</span>
+            <span className="streak-badge" style={{background:streak>=7?'#92400e33':'#37415133',color:streak>=7?'#fbbf24':'#9ca3af'}}>
+              🔥{streak} {mult>1&&`×${mult}`}
+            </span>
+            <span style={{fontSize:11,color:'#6b7280'}}>📅{daysPlayed||1}д</span>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:12}}>
+          <div style={{flex:1}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#6b7280',marginBottom:3}}>
+              <span>❤️ HP</span><span>{char.hp}/{char.maxHp}</span>
+            </div>
+            <Bar value={char.hp} max={char.maxHp} color={char.hp/char.maxHp>.6?'#22c55e':char.hp/char.maxHp>.3?'#eab308':'#ef4444'}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#6b7280',marginBottom:3}}>
+              <span>⭐ XP</span><span>{xpInLevel}/{xpNeeded}</span>
+            </div>
+            <Bar value={xpInLevel} max={xpNeeded}/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style={{maxWidth:520,margin:'0 auto',padding:'12px 16px'}}>
+      <div className="tab-bar">
+        {tabs.map(t => <button key={t.id} className={`tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.label}</button>)}
+      </div>
+
+      {/* ═══ QUESTS TAB ═══ */}
+      {tab==='quests' && <div className="fade-in">
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <h3 style={{fontSize:17,fontWeight:700}}>Квесты на сегодня</h3>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <span style={{fontSize:12,color:'#6b7280',background:'#1f2937',padding:'4px 10px',borderRadius:99}}>{todayCount}/{totalQuests}</span>
+            {todayCount >= 3 && <span style={{fontSize:12,color:'#22c55e'}}>✓ стрик</span>}
+          </div>
+        </div>
+        {Object.entries(QUESTS).map(([stat,quests]) => <div key={stat} style={{marginBottom:16}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,fontSize:11,fontWeight:700,color:'#4b5563',textTransform:'uppercase',letterSpacing:1,marginBottom:6}}>
+            {stat}
+            {stat===classBonus && <span style={{color:char.cls.color,fontSize:10,fontWeight:600}}>⚡ ×1.5</span>}
+          </div>
+          {quests.map(q => {
+            const key = stat+':'+q.name;
+            const done = todayDone[key];
+            let displayXp = Math.round(q.xp * mult);
+            if (stat === classBonus) displayXp = Math.round(displayXp * 1.5);
+            return <div key={key} style={{position:'relative'}}>
+              <button className={`quest-btn ${done?'done':''}`} onClick={()=>!done&&completeQuest(q,stat)} style={{opacity:done?.6:1}}>
+                <span style={{fontSize:24}}>{done?'✅':q.icon}</span>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:500,color:done?'#4b5563':'#fff',textDecoration:done?'line-through':'none'}}>{q.name}</div>
+                  <div style={{fontSize:12,color:'#4b5563'}}>
+                    +{displayXp} XP • +{q.gold} 🪙 • +{q.sp} SP
+                    {mult>1&&<span style={{color:'#f97316'}}> 🔥×{mult}</span>}
+                    {stat===classBonus&&<span style={{color:'#a855f7'}}> ⚡класс</span>}
+                  </div>
+                </div>
+              </button>
+              {done && <button className="btn" onClick={(e)=>{e.stopPropagation();undoQuest(q,stat);}} title="Отменить" style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',padding:'4px 10px',borderRadius:8,fontSize:11,color:'#f87171',background:'#7f1d1d33',border:'1px solid #7f1d1d66',zIndex:2}}>
+                ↩ Отмена
+              </button>}
+            </div>;
+          })}
+        </div>)}
+      </div>}
+
+      {/* ═══ SKILLS TAB ═══ */}
+      {tab==='skills' && <div className="fade-in">
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:4}}>Деревья Навыков</h3>
+        <p style={{fontSize:12,color:'#6b7280',marginBottom:16}}>Прокачивай навыки выполняя квесты. На уровне 3 и 5 открываются пассивки!</p>
+        {Object.entries(SKILL_TREES).map(([stat,tree]) => {
+          const sp = (char.skillPoints||{})[stat] || 0;
+          const sl = getSkillLevel(sp);
+          return <div key={stat} className="skill-card" style={{borderColor:tree.color+'44'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+              <div style={{display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:24}}>{tree.icon}</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:15}}>{tree.name} <span style={{fontSize:12,color:tree.color}}>({stat})</span></div>
+                  <div style={{fontSize:12,color:'#6b7280'}}>Ур.{sl.level} {sl.rank} • {sp} SP</div>
+                </div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:20,fontWeight:900,color:tree.color}}>{sl.level}</div>
+                <div style={{fontSize:10,color:'#4b5563'}}>/ 5</div>
+              </div>
+            </div>
+            {sl.nextSp && <div style={{marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'#4b5563',marginBottom:3}}>
+                <span>До ур.{sl.level+1}</span><span>{sp}/{sl.nextSp} SP</span>
+              </div>
+              <Bar value={sp} max={sl.nextSp} color={tree.color} height={6}/>
+            </div>}
+            {tree.skills.map(skill => {
+              const hasP3 = sl.level >= 3;
+              const hasP5 = sl.level >= 5;
+              return <div key={skill.id} style={{padding:'8px 0',borderTop:'1px solid #1f2937'}}>
+                <div style={{fontWeight:500,fontSize:13,marginBottom:4}}>{skill.name}</div>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:6,background:hasP3?tree.color+'22':'#1f2937',color:hasP3?tree.color:'#4b5563',border:`1px solid ${hasP3?tree.color+'44':'#374151'}`}}>
+                    {hasP3?'✓':''} Ур.3: {skill.passiveLv3}
+                  </span>
+                  <span style={{fontSize:11,padding:'2px 8px',borderRadius:6,background:hasP5?tree.color+'22':'#1f2937',color:hasP5?tree.color:'#4b5563',border:`1px solid ${hasP5?tree.color+'44':'#374151'}`}}>
+                    {hasP5?'✓':'🔒'} Ур.5: {skill.passiveLv5}
+                  </span>
+                </div>
+              </div>;
+            })}
+          </div>;
+        })}
+      </div>}
+
+      {/* ═══ STATS TAB ═══ */}
+      {tab==='stats' && <div className="fade-in">
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12}}>Характеристики</h3>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:16}}>
+          {Object.entries(char.stats).map(([k,v]) => {
+            const bonus = k===char.cls?.stat;
+            const whole = Math.floor(v);
+            const frac = v - whole;
+            return <div key={k} className="stat-card" style={{borderColor:bonus?char.cls.color:'#374151',background:bonus?char.cls.color+'10':'#111827'}}>
+              <div style={{fontSize:28,fontWeight:900,color:bonus?char.cls.color:'#e5e7eb'}}>{whole}</div>
+              <div style={{fontSize:11,color:'#6b7280',fontWeight:600}}>{k}</div>
+              {bonus && <div style={{fontSize:10,color:char.cls.color,marginTop:2}}>+3 класс</div>}
+              <div style={{marginTop:6}}>
+                <Bar value={frac*10} max={10} color={bonus?char.cls.color:'#6b7280'} height={4}/>
+                <div style={{fontSize:9,color:'#4b5563',marginTop:2}}>+{(frac*10).toFixed(0)}/10 → +1</div>
+              </div>
+            </div>;
+          })}
+        </div>
+
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12}}>Прогрессия</h3>
+        <div className="card" style={{marginBottom:12,background:'linear-gradient(135deg,#111827,#1a1a2e)'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <span style={{fontWeight:700}}>Уровень {lvl.level}: {lvl.rank}</span>
+            <span style={{fontSize:12,color:'#eab308'}}>→ Ур.{Math.min(lvl.level+1,20)}</span>
+          </div>
+          <Bar value={xpInLevel} max={xpNeeded} height={12}/>
+          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#4b5563',marginTop:4}}>
+            <span>{char.xp} XP всего</span>
+            <span>{xpNeeded - xpInLevel} XP до следующего</span>
+          </div>
+        </div>
+
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12}}>Общая статистика</h3>
+        {[
+          {label:'Дней в игре',value:daysPlayed||1,icon:'📅'},
+          {label:'Текущий стрик',value:`${streak} дней`,icon:'🔥'},
+          {label:'Множитель XP',value:`×${mult}`,icon:'⚡'},
+          {label:'Квестов выполнено',value:char.questsDone||0,icon:'⚔️'},
+          {label:'Достижений',value:`${unlockedAch.length}/${ACHIEVEMENTS.length}`,icon:'🏆'},
+          {label:'Боссов убито',value:BOSSES.filter(b=>(char.bossProgress||{})[b.name]>=b.total).length+'/'+BOSSES.length,icon:'🐲'},
+          {label:'Всего Gold',value:char.gold + (char.goldSpent||0),icon:'🪙'},
+        ].map((s,i) => <div key={i} className="card" style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+          <span style={{color:'#9ca3af',fontSize:14}}>{s.icon} {s.label}</span>
+          <span style={{fontWeight:700,fontFamily:'monospace',fontSize:15}}>{s.value}</span>
+        </div>)}
+      </div>}
+
+      {/* ═══ BOSSES TAB ═══ */}
+      {tab==='bosses' && <div className="fade-in">
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:12}}>Активные Боссы</h3>
+        {BOSSES.map(boss => {
+          const prog = (char.bossProgress||{})[boss.name]||0;
+          const dead = prog >= boss.total;
+          const tierColors = {mini:'#f59e0b',weekly:'#ef4444',raid:'#a855f7'};
+          const tierNames = {mini:'Мини-Босс',weekly:'Недельный',raid:'Рейд-Босс'};
+          return <div key={boss.name} className="card" style={{marginBottom:10,borderColor:dead?'#166534':tierColors[boss.tier]+'33',background:dead?'#052e1622':'#111827'}}>
+            <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+              <span style={{fontSize:32}}>{dead?'💀':boss.icon}</span>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{fontWeight:700,color:dead?'#4ade80':'#fff',textDecoration:dead?'line-through':'none'}}>{boss.name}</span>
+                  <span style={{fontSize:10,padding:'1px 6px',borderRadius:4,background:tierColors[boss.tier]+'22',color:tierColors[boss.tier],border:`1px solid ${tierColors[boss.tier]}44`}}>{tierNames[boss.tier]}</span>
+                </div>
+                <div style={{fontSize:12,color:'#6b7280'}}>{boss.condition}</div>
+              </div>
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+              <Bar value={prog} max={boss.total} color={dead?'#22c55e':tierColors[boss.tier]}/>
+              <span style={{fontSize:12,color:'#6b7280',whiteSpace:'nowrap'}}>{prog}/{boss.total}</span>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:12,color:'#4b5563'}}>+{boss.xp} XP, +{boss.gold} 🪙</span>
+              {!dead && <button className="btn" onClick={()=>{
+                const newProg = Math.min(prog+1,boss.total);
+                   const isDead = newProg>=boss.total;
+                setChar(c=>({
+                  ...c,
+                  bossProgress:{...(c.bossProgress||{}), [boss.name]:newProg},
+                  ...(isDead?{xp:c.xp+boss.xp,gold:c.gold+boss.gold}:{}),
+                }));
+                if(isDead){setReward({xp:boss.xp,gold:boss.gold});setTimeout(()=>setReward(null),2000);}
+              }} style={{fontSize:12,padding:'6px 12px',borderRadius:8,background:tierColors[boss.tier]+'22',color:tierColors[boss.tier],border:`1px solid ${tierColors[boss.tier]}55`}}>
+                +1 Прогресс
+              </button>}
+            </div>
+          </div>;
+        })}
+      </div>}
+
+      {/* ═══ ACHIEVEMENTS TAB ═══ */}
+      {tab==='achieve' && <div className="fade-in">
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:4}}>Достижения</h3>
+        <p style={{fontSize:12,color:'#6b7280',marginBottom:16}}>{unlockedAch.length}/{ACHIEVEMENTS.length} разблокировано</p>
+        <Bar value={unlockedAch.length} max={ACHIEVEMENTS.length} color="#a855f7" height={8}/>
+        <div style={{marginTop:16}}>
+          {['bronze','silver','gold','legendary'].map(tier => {
+            const tierAch = ACHIEVEMENTS.filter(a=>a.tier===tier);
+            const tierNames = {bronze:'🥉 Бронза',silver:'🥈 Серебро',gold:'🥇 Золото',legendary:'🏆 Легендарные'};
+            const tierColors = {bronze:'#cd7f32',silver:'#c0c0c0',gold:'#ffd700',legendary:'#a855f7'};
+            return <div key={tier} style={{marginBottom:16}}>
+              <div style={{fontSize:13,fontWeight:700,color:tierColors[tier],marginBottom:8}}>{tierNames[tier]}</div>
+              {tierAch.map(ach => {
+                const unlocked = unlockedAch.includes(ach.id);
+                return <div key={ach.id} className={`achievement-card ${unlocked?'unlocked':'locked'}`}>
+                  <div style={{display:'flex',alignItems:'center',gap:12}}>
+                    <span style={{fontSize:28}}>{unlocked ? ach.icon : '🔒'}</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,fontSize:14,color:unlocked?'#e5e7eb':'#4b5563'}}>{ach.name}</div>
+                      <div style={{fontSize:12,color:unlocked?'#9ca3af':'#374151'}}>{ach.desc}</div>
+                    </div>
+                    <div style={{textAlign:'right',fontSize:11,color:unlocked?'#eab308':'#374151'}}>
+                      {ach.xp>0&&<div>+{ach.xp} XP</div>}
+                      {ach.gold>0&&<div>+{ach.gold} 🪙</div>}
+                    </div>
+                  </div>
+                </div>;
+              })}
+            </div>;
+          })}
+        </div>
+      </div>}
+
+      {/* ═══ HISTORY TAB ═══ */}
+      {tab==='history' && <div className="fade-in">
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:4}}>История прогресса</h3>
+        <p style={{fontSize:13,color:'#6b7280',marginBottom:16}}>Все действия записываются автоматически</p>
+        {char.history && Object.keys(char.history).length > 0 ?
+          Object.entries(char.history).sort((a,b)=>b[0].localeCompare(a[0])).map(([date, entries]) => {
+            const d = new Date(date);
+            const dayName = d.toLocaleDateString('ru',{weekday:'short',day:'numeric',month:'short'});
+            const totalXp = entries.reduce((s,e)=>s+e.xp,0);
+            const totalGold = entries.reduce((s,e)=>s+e.gold,0);
+            return <div key={date} style={{marginBottom:16}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                <span style={{fontSize:14,fontWeight:700,color:date===today()?'#eab308':'#9ca3af'}}>
+                  {date===today()?'📍 Сегодня':dayName}
+                </span>
+                <div style={{display:'flex',gap:10,fontSize:12}}>
+                  <span style={{color:'#eab308'}}>+{totalXp} XP</span>
+                  <span style={{color:'#a16207'}}>+{totalGold} 🪙</span>
+                  <span style={{color:'#6b7280'}}>{entries.length} кв.</span>
+                </div>
+              </div>
+              {entries.map((e,i) => <div key={i} className="history-row">
+                <span style={{color:'#4b5563',fontFamily:'monospace',fontSize:11}}>{e.time}</span>
+                <span style={{flex:1,color:'#d1d5db'}}>{e.quest}</span>
+                <span style={{fontSize:11,color:'#4b5563',background:'#1f2937',padding:'2px 6px',borderRadius:4}}>{e.stat}</span>
+                <span style={{fontSize:12,color:'#eab308',fontFamily:'monospace'}}>+{e.xp}</span>
+              </div>)}
+            </div>;
+          })
+        : <div style={{textAlign:'center',padding:40,color:'#4b5563'}}>
+            <div style={{fontSize:48,marginBottom:8}}>📜</div>
+            <p>Пока пусто. Выполни первый квест!</p>
+          </div>
+        }
+      </div>}
+
+      {/* ═══ SHOP TAB ═══ */}
+      {tab==='shop' && <div className="fade-in">
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:4}}>Магазин Наград</h3>
+        <p style={{fontSize:13,color:'#6b7280',marginBottom:16}}>Потрать Gold на реальные награды для себя!</p>
+        {SHOP.map(item => {
+          const ok = char.gold >= item.price;
+          return <button key={item.name} className="quest-btn" onClick={()=>{
+            if(!ok) return;
+            setChar(c=>({...c, gold:c.gold-item.price, goldSpent:(c.goldSpent||0)+item.price}));
+            setReward({xp:0, gold:-item.price});
+            setTimeout(()=>setReward(null),1500);
+          }} style={{opacity:ok?1:.35,cursor:ok?'pointer':'not-allowed'}}>
+            <span style={{fontSize:24}}>{item.icon}</span>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:500}}>{item.name}</div>
+            </div>
+            <span style={{fontFamily:'monospace',fontSize:14,color:ok?'#eab308':'#4b5563'}}>{item.price} 🪙</span>
+          </button>;
+        })}
+      </div>}
+    </div>
+  </div>;
+};
+
+// ─── APP ───
+function App() {
+  const [loading, setLoading] = useState(true);
+  const [screen, setScreen] = useState('welcome');
+  const [name, setName] = useState(tgUserName || '');
+  const [selClass, setSelClass] = useState(null);
+  const [char, setChar] = useState(null);
+  const [savedChar, setSavedChar] = useState(null);
+
+  // Async load on mount
+  useEffect(() => {
+    Promise.all([
+      DB.loadAsync('character'),
+      DB.loadAsync('today_' + today()),
+    ]).then(([charData, todayData]) => {
+      if (charData) {
+        setSavedChar(charData);
+        setChar(charData);
+        if (tgUserName && charData.name !== tgUserName) {
+          charData.name = tgUserName;
+        }
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const startGame = () => {
+    const heroName = name.trim() || tgUserName || 'Герой';
+    const stats = {STR:5,INT:5,DEX:5,CHA:5,WIS:5,CON:5};
+    stats[selClass.stat] += 3;
+    const c = {
+      name: heroName, cls:selClass, level:1, rank:'Новичок',
+      xp:0, hp:100, maxHp:105, gold:0,
+      stats, questsDone:0, bossProgress:{},
+      history:{}, lastActive:today(), goldSpent:0,
+      skillPoints:{STR:0,INT:0,DEX:0,CHA:0,WIS:0,CON:0},
+      achievements:[],
+    };
+    setChar(c);
+    DB.save('character', c);
+    setScreen('dashboard');
+  };
+
+  const continueGame = () => {
+    if(char && char.lastActive && char.lastActive !== today()) {
+      const missed = daysBetween(char.lastActive, today()) - 1;
+      if(missed > 0) {
+        const penalty = Math.min(missed * 5, 50);
+        setChar(c => {
+          const updated = {...c, hp: Math.max(c.hp - penalty, 1), lastActive: today()};
+          DB.save('character', updated);
+          return updated;
+        });
+      }
+    }
+    setScreen('dashboard');
+  };
+
+  if (loading) {
+    return <div style={{minHeight:'100vh'}}>
+      <Particles/>
+      <div className="loading-screen" style={{position:'relative',zIndex:10}}>
+        <div style={{fontSize:60}}>⚔️</div>
+        <div className="spinner"/>
+        <div style={{color:'#6b7280',fontSize:14}}>Загрузка данных...</div>
+      </div>
+    </div>;
+  }
+
+  return <div style={{minHeight:'100vh'}}>
+    <Particles/>
+    <div style={{position:'relative',zIndex:10}}>
+      {screen==='welcome' && <WelcomeScreen hasSave={!!savedChar} onNext={()=> savedChar ? continueGame() : setScreen(tgUserName ? 'class' : 'name')}/>}
+      {screen==='name' && <NameScreen name={name} setName={setName} onNext={()=>setScreen('class')}/>}
+      {screen==='class' && <ClassScreen sel={selClass} setSel={setSelClass} onNext={()=>setScreen('ready')} onBack={()=>setScreen(tgUserName ? 'welcome' : 'name')}/>}
+      {screen==='ready' && <ReadyScreen name={name || tgUserName || 'Герой'} cls={selClass} onStart={startGame}/>}
+      {screen==='dashboard' && char && <Dashboard char={char} setChar={setChar}/>}
+    </div>
+  </div>;
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
